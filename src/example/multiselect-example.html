@@ -1,0 +1,51 @@
+<form>
+  <mat-form-field class="example-form-field">
+    <mat-label>Favorite Stations</mat-label>
+
+    <mat-chip-grid
+      #chipGrid
+      aria-label="Station selection"
+      [formControl]="fc"
+      cdkDropList
+      cdkDropListOrientation="horizontal"
+      (cdkDropListDropped)="drop($event)"
+    >
+      @for (fruit of fruits(); track fruit) {
+        <mat-chip-row cdkDrag (removed)="remove(fruit)">
+          {{ fruit }}
+          <button matChipRemove [attr.aria-label]="'remove ' + fruit">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-chip-row>
+      }
+    </mat-chip-grid>
+
+    <input
+      placeholder="New Station..."
+      #fruitInput
+      [formControl]="fc"
+      [matChipInputFor]="chipGrid"
+      [matAutocomplete]="auto"
+      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+      (matChipInputTokenEnd)="add($event)"
+    />
+
+    <mat-autocomplete
+      #auto="matAutocomplete"
+      (optionSelected)="selected($event); fruitInput.value = ''"
+    >
+      @for (fruit of filteredFruits(); track fruit) {
+        <mat-option [value]="fruit">{{ fruit }}</mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+</form>
+
+
+<div class="flex items-center justify-between">
+  <button mat-raised-button [disabled]="fc.disabled" (click)="submit()">Submit</button>
+  <div class="flex items-center gap-x-2">
+    <button mat-button [disabled]="fc.disabled" (click)="fc.disable()">Disable</button>
+    <button mat-button [disabled]="fc.enabled" (click)="fc.enable()">Enable</button>
+  </div>
+</div>

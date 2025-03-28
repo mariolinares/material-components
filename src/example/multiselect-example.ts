@@ -4,50 +4,61 @@ import {
   computed,
   inject,
   signal,
-} from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { LiveAnnouncer } from '@angular/cdk/a11y';
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
+} from "@angular/core";
+import { FormControl, ReactiveFormsModule } from "@angular/forms";
+import { LiveAnnouncer } from "@angular/cdk/a11y";
+import { COMMA, ENTER } from "@angular/cdk/keycodes";
 import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
-} from '@angular/material/autocomplete';
-import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+} from "@angular/material/autocomplete";
+import { MatChipInputEvent, MatChipsModule } from "@angular/material/chips";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatIconModule } from "@angular/material/icon";
+import {
+  CdkDrag,
+  CdkDropList,
+  CdkDragDrop,
+  moveItemInArray,
+  DragDropModule,
+} from "@angular/cdk/drag-drop";
+import {MatButtonModule} from '@angular/material/button';
 
 /**
  * @title Chips Autocomplete with Reactive Form
  */
 @Component({
-  selector: 'chips-reactive-form-example',
-  templateUrl: 'chips-reactive-form-example.html',
-  styleUrl: 'chips-reactive-form-example.css',
+  selector: "multiselect-example",
+  templateUrl: "multiselect-example.html",
+  styleUrl: "multiselect-example.css",
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatFormFieldModule,
     MatChipsModule,
     MatIconModule,
+    MatButtonModule,
     MatAutocompleteModule,
     ReactiveFormsModule,
+    CdkDropList,
+    CdkDrag,
+    DragDropModule,
   ],
 })
-export class ChipsReactiveFormExample {
+export class MultiselectExample {
   readonly separatorKeysCodes: number[] = [ENTER, COMMA];
 
-  readonly fruitCtrl = new FormControl('');
-  readonly fruits = signal(['Lemon']);
+  readonly fc = new FormControl("");
+  readonly fruits = signal<string[]>([]);
+
   readonly allFruits: string[] = [
-    'Apple',
-    'Lemon',
-    'Lime',
-    'Orange',
-    'Strawberry',
+    "Av. Marcial, 38",
+    "Estación de Atocha",
+    "Estación de Chamartín",
   ];
 
   readonly filteredFruits = computed(() => {
-    const currentFruit = this.fruitCtrl.value?.toLowerCase() ?? '';
+    const currentFruit = this.fc.value?.toLowerCase() ?? "";
     return currentFruit
       ? this.allFruits.filter((fruit) =>
           fruit.toLowerCase().includes(currentFruit)
@@ -57,23 +68,19 @@ export class ChipsReactiveFormExample {
 
   readonly announcer = inject(LiveAnnouncer);
 
-  constructor() {
-    this.fruitCtrl.valueChanges.subscribe(console.log);
-  }
-
   submit() {
-    console.log(this);
+    console.log("Selected fruits (ordered):", this.fruits());
   }
 
   add(event: MatChipInputEvent): void {
-    const value = (event.value || '').trim();
+    const value = (event.value || "").trim();
 
-    if (value) {
+    if (value && !this.fruits().includes(value)) {
       this.fruits.update((fruits) => [...fruits, value]);
       this.announcer.announce(`added ${value}`);
     }
 
-    this.fruitCtrl.setValue('');
+    this.fc.setValue("");
     event.chipInput?.clear();
   }
 
@@ -95,7 +102,15 @@ export class ChipsReactiveFormExample {
       this.fruits.update((fruits) => [...fruits, selectedFruit]);
     }
 
-    this.fruitCtrl.setValue('');
+    this.fc.setValue("");
     event.option.deselect();
+  }
+
+  drop(event: CdkDragDrop<string[]>) {
+    this.fruits.update((fruits) => {
+      const updated = [...fruits];
+      moveItemInArray(updated, event.previousIndex, event.currentIndex);
+      return updated;
+    });
   }
 }
